@@ -6,7 +6,7 @@ import {
   addTask,
   updateTask,
   deleteTask,
-} from './api'
+} from './api' // Sizning api.js faylingizdagi funksiyalar
 
 function App() {
   const [tg, setTg] = useState(null)
@@ -17,30 +17,42 @@ function App() {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [selectedGoalId, setSelectedGoalId] = useState(null)
 
+  // Telegram WebApp integratsiyasi yoki test uchun userId olish
   useEffect(() => {
-    const webApp = window.Telegram.WebApp
-    webApp.ready()
-    setTg(webApp)
-    if (webApp.initDataUnsafe?.user?.id) {
-      setUserId(webApp.initDataUnsafe.user.id)
+    const webApp = window.Telegram?.WebApp
+    if (webApp) {
+      webApp.ready()
+      setTg(webApp)
+      if (webApp.initDataUnsafe?.user?.id) {
+        setUserId(webApp.initDataUnsafe.user.id)
+      } else {
+        // TEST uchun
+        setUserId('test-user-id')
+      }
+    } else {
+      // TEST uchun
+      setUserId('test-user-id')
     }
   }, [])
 
+  // userId o‘zgarganda maqsadlarni olish
   useEffect(() => {
     if (userId) {
       fetchGoals()
     }
   }, [userId])
 
+  // Backenddan maqsadlarni olish
   const fetchGoals = async () => {
     try {
       const res = await getGoals(userId)
       setGoals(res.data)
     } catch (err) {
-      console.error(err)
+      console.error('Maqsadlarni olishda xato:', err)
     }
   }
 
+  // Yangi maqsad qo‘shish
   const handleAddGoal = async () => {
     if (!newGoalTitle.trim()) return alert('Maqsad nomini kiriting')
     try {
@@ -48,20 +60,22 @@ function App() {
       setNewGoalTitle('')
       fetchGoals()
     } catch (err) {
-      console.error(err)
+      console.error('Maqsad qo‘shishda xato:', err)
     }
   }
 
+  // Maqsadni o‘chirish
   const handleDeleteGoal = async (id) => {
     if (!confirm('Maqsadni o‘chirilsinmi?')) return
     try {
       await deleteGoal(id)
       fetchGoals()
     } catch (err) {
-      console.error(err)
+      console.error('Maqsad o‘chirishda xato:', err)
     }
   }
 
+  // Vazifa qo‘shish
   const handleAddTask = async (goalId) => {
     if (!newTaskTitle.trim()) return alert('Vazifa nomini kiriting')
     try {
@@ -70,37 +84,40 @@ function App() {
       fetchGoals()
       setSelectedGoalId(null)
     } catch (err) {
-      console.error(err)
+      console.error('Vazifa qo‘shishda xato:', err)
     }
   }
 
+  // Vazifa bajarilganini belgisi o‘zgartirish (toggle)
   const handleToggleTask = async (goalId, taskId, done) => {
     try {
       await updateTask(goalId, taskId, { done: !done })
       fetchGoals()
     } catch (err) {
-      console.error(err)
+      console.error('Vazifa holatini yangilashda xato:', err)
     }
   }
 
+  // Vazifani o‘chirish
   const handleDeleteTask = async (goalId, taskId) => {
     if (!confirm('Vazifani o‘chirilsinmi?')) return
     try {
       await deleteTask(goalId, taskId)
       fetchGoals()
     } catch (err) {
-      console.error(err)
+      console.error('Vazifa o‘chirishda xato:', err)
     }
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="p-4 max-w-xl mx-auto bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-4">AI Vaqt Boshqaruvchi</h1>
 
       {!userId && <p>Foydalanuvchi ID topilmadi</p>}
 
       {userId && (
         <>
+          {/* Yangi maqsad qo‘shish formasi */}
           <div className="mb-4">
             <input
               type="text"
@@ -126,17 +143,25 @@ function App() {
             </button>
           </div>
 
+          {/* Maqsadlar ro‘yxati */}
           <div>
+            {goals.length === 0 && (
+              <p className="text-gray-500">Maqsadlar mavjud emas</p>
+            )}
+
             {goals.map((goal) => (
               <div
                 key={goal._id}
                 className="border rounded p-4 mb-4 bg-white shadow"
               >
                 <div className="flex justify-between items-center mb-2">
-                  <h2 className="font-semibold text-xl">{goal.title} ({goal.type})</h2>
+                  <h2 className="font-semibold text-xl">
+                    {goal.title} ({goal.type})
+                  </h2>
                   <button
                     className="text-red-600"
                     onClick={() => handleDeleteGoal(goal._id)}
+                    title="Maqsadni o‘chirish"
                   >
                     🗑️
                   </button>
@@ -149,7 +174,7 @@ function App() {
                       key={task._id}
                       className="flex items-center justify-between border-b py-1"
                     >
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={task.done}
@@ -164,6 +189,7 @@ function App() {
                       <button
                         className="text-red-600"
                         onClick={() => handleDeleteTask(goal._id, task._id)}
+                        title="Vazifani o‘chirish"
                       >
                         ❌
                       </button>
@@ -171,7 +197,7 @@ function App() {
                   ))}
                 </ul>
 
-                {/* Vazifa qo'shish */}
+                {/* Vazifa qo'shish uchun input */}
                 {selectedGoalId === goal._id ? (
                   <div className="mt-2 flex gap-2">
                     <input

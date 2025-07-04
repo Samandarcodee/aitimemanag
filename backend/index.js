@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
 const Goal = require('./models/Goal')
+const OpenAI = require('openai')
 
 const app = express()
 app.use(cors())
@@ -138,6 +139,10 @@ app.delete('/api/goals/:goalId/tasks/:taskId', async (req, res) => {
     console.error(err)
     res.status(500).json({ error: 'Server xatosi' })
   }
+})
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 app.listen(PORT, () => console.log(`🚀 Server ${PORT} portda ishlamoqda`))
